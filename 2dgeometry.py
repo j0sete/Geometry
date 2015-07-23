@@ -1,6 +1,24 @@
-from math import sqrt
+
+from math import sqrt, cos, acos, pi, sin as sen # Why sen instead of sin?? Because i'm spanish and I prefer to call it sen
+
+def to_rad(angle):
+    '''
+     180  (grad) -> pi (rad)
+    angle (grad) -> x (rad)
+    '''
+    return (angle*pi)/180
+
+def to_grad(angle):
+    '''
+      pi    (rad) -> 180 (grad)
+     angle  (rad) ->  x  (grad)
+    '''
+    return (angle*180)/pi
 
 class Poligon:
+    '''
+    Abstract class to defined posibles sides of a Poligon
+    '''
     side = {
         'three' : 3, '3' : 3, 'three sides' : 3, 'three side' : 3, 'threesides' : 3, 'threeside' : 3,
         'four'  : 4, '4' : 4, 'four sides'  : 4, 'four side'  : 4, 'foursides'  : 4, 'fourside'  : 4
@@ -120,6 +138,9 @@ class Point(object):
             return (-1 * num)
 
 class Vector:
+    '''
+    2D or 3D vectos geometry
+    '''
 
     i = 'i'
     j = 'j'
@@ -156,7 +177,7 @@ class Vector:
 
         if components != None and len(components) == len(self.base):
             self.components(components)
-        elif len(components) != len(self.base):
+        elif components != None and len(components) != len(self.base):
             print 'Bad initialization:\n\tComponent dimension not the same as vector dimension'
 
     def __str__(self):
@@ -164,6 +185,9 @@ class Vector:
             return '({},{})'.format(self.direction[Vector.i],self.direction[Vector.j])
         elif len(self.base) == 3:
             return '({},{},{})'.format(self.direction[Vector.i],self.direction[Vector.j],self.direction[Vector.k])
+
+    def __len__(self):
+        return len(self.base)
 
     def __add__(self,other):
 
@@ -190,6 +214,97 @@ class Vector:
     def __abs__(self):
         return self.calc_module()
 
+    def __neg__(self):
+        new_vector = []
+        for component in Vector.bases_keys[len(self.base)-2]:
+            new_vector.append( -self.direction[component] )
+        return Vector(len(self.base),new_vector)
+
+    def __mul__(self,other):
+
+        if isinstance(other,int) or isinstance(other,float):
+            for component in self.direction:
+                direction[component] *= other
+
+        elif isinstance(other,Vector) and len(other) == len(self):
+
+            result = []
+            for component in self.direction:
+                result.append(self.direction[component] * other.direction[component])
+
+            return sum(result)
+
+        elif not (isinstance(other,int) or isinstance(other,float) or isinstance(other,Vector)):
+            print 'Type error on Vector:\n\tMust use type float, int or Vector on:\n\tMultiplicate vectors.'
+
+        elif len(other) == len(self):
+            print 'Vectors bad dimension:\n\tVectors scalar product must be same dimension'
+
+    def __rmul__(self,other):
+        if isinstance(other,int) or isinstance(other,float):
+            return self.__mul__(other)
+
+    def __div__(self,other):
+        instance = isinstance(other,int) or isinstance(other,float)
+        if not instance:
+            print 'Error type:\n\tType on division must be an escalar.\n int or float type ??'
+        else:
+            result = []
+            for component in Vector.bases_keys[len(self.base)-2]:
+                result.append( float(self.direction[component]) / float(other))
+            return Vector(len(self),result)
+
+    def __rdiv__(self,other):
+        return self.__div__(other)
+
+    def __getitem__(self,key):
+        count = 0
+        if key < len(self):
+            for component in Vector.bases_keys[len(self.base)-2]:
+                if count == key:
+                    return self.direction[component]
+                count += 1
+        else:
+            print '***Out of range!!:\n\tVector have %d dimension\n\tYou\'re trying to acces on %dth component' % (len(self),key+1)
+            return None
+        return None
+
+    def __setitem__(self,key,value):
+        count = 0
+        if key < len(self):
+            for component in Vector.bases_keys[len(self.base)-2]:
+                if count == key:
+                    self.direction[component] = value
+                count += 1
+        else:
+            print '***Out of range!!:\n\tVector have %d dimension\n\tYou\'re trying to acces on %dth component' % (len(self),key+1)
+
+    def __xor__(self,other):
+        'Calculate the vectorial product (v1^v2) of the vector'
+        if len(self) == len(other) and isinstance(other,Vector):
+            if len(self) == 3:
+                # This could export to ndimension vector
+                new_vector = Vector('base 3')
+                new_vector[0] = (self[1] * other[2]) - (self[2] * other[1])
+                print new_vector[0]
+                new_vector[1] = - ( (self[0] * other[2]) - (self[2] * other[0]) )
+                print new_vector[1]
+                new_vector[2] = (self[0] * other[1]) - (self[1] * other[0])
+                print new_vector[2]
+                return new_vector
+            else:
+                print 'Dimension error:\n\tFor calculate vectorial product must be 3 dimension vector.'
+
+        elif not isinstance(other,Vector):
+            print 'Fail in vectorial calculate:\n\tBoth element must be Vector type.'
+
+        else:
+            print 'Dimenstion error:\n\tVectors must have same dimension'
+
+    def __rxor__(self,other):
+        'Calculate the vectorial product (v1^v2) of the vector'
+        return self.__xor__(other)
+
     def getBase(self,base):
         if str(base) in Vector.base_names:
             for name in Vector.base_names:
@@ -197,6 +312,7 @@ class Vector:
                     return Vector.base_names[name]
 
     def calc_module(self):
+        'Calculate the module of the vector'
         components = []
         for direction in self.direction:
             if self.direction[direction] == None:
@@ -204,10 +320,10 @@ class Vector:
                 return None
             else:
                 components.append(self.direction[direction] ** 2)
-        return sqrt(sum(components))
+        return float(sqrt(sum(components)))
 
     def components(self,components):
-
+        'Components of the vector a i + b j + c k'
         if isinstance(components,dict) and len(components) == len(base):
             for component in components:
                 self.direction[component] = components[component]
@@ -220,8 +336,15 @@ class Vector:
         else:
             print 'Bad use of method components\n\tWe accept list or dict types'
 
+    def _get_angle(self,other):
+        return ( (self * other)/(abs(self)*abs(other)) )
 
-v = Vector(2,[1,1])
-w = Vector(2,[3,4])
-print (v+w)
-print abs(w)
+def dot(v1,v2):
+    cos_alpha = (v1*v2)/(abs(v1)*abs(v2))
+    return abs(v1)*abs(v2)*cos_alpha
+
+def normalize(v):
+    new_vector = []
+    for i in xrange(len(v)):
+        new_vector.append( float(v[i]) / float(abs(v)))
+    return Vector(len(v),new_vector)
